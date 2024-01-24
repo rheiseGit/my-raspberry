@@ -21,4 +21,8 @@ The project aims to create a web application for a Raspberry Pi, which provides 
 
 	> conda install -c conda-forge opencv
 
+	> conda install -c conda-forge dash
+
+	> conda install -c conda-forge pandas
+
 	> conda env export > environment.yml

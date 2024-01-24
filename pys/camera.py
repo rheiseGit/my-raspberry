@@ -1,10 +1,54 @@
 import cv2
 import numpy as np
+import time
+import picamera2 
 
+CAMERA_INDEX = -1
+print('Camera-Index',CAMERA_INDEX)
+
+class AdapterOpenCV():
+    def __init__(self):
+        self.vc = cv2.VideoCapture(-1)
+        
+    def read(self)->np.array:
+        success, image = self.vc.read()
+        return image
+    
+    def release(self):
+        self.vc.release()
+        
+    def check(self) -> bool:
+        """check if camera if available
+
+        Returns:
+            bool: True means that camera is available
+        """
+        if self.vc is None or not self.vc.isOpened():
+            return False
+        else:
+            return True
+        
+class AdapterPiCamera():
+    def __init__(self):
+        self.pc = picamera2.Picamera2()
+        self.pc.start()
+        
+    def read(self)->np.array:
+        image = self.pc.capture_array("main")
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+        return image
+    
+    def release(self):
+        self.pc.stop()
+        self.pc.close()
+        print('--')
+    
+    def check(self):
+        return True
 
 class VideoCamera(object):
-    def __init__(self):
-        self.video = cv2.VideoCapture(0)
+    def __init__(self,adapter):
+        self.adapter = adapter
         self.use_grayscale = False
         self.flip = False
         self.info = False
@@ -12,7 +56,7 @@ class VideoCamera(object):
         self.font = cv2.FONT_HERSHEY_SIMPLEX
         self.running = True
 
-    def __del__(self):
+    def release(self):
         """releases camera"""
         self.video.release()
 
@@ -23,10 +67,13 @@ class VideoCamera(object):
             numpy.array: Image taken by camera
         """
         self.counter += 1
+        #print(self.check())
+        #time.sleep(1)
         try:
-            success, image = self.video.read()
+            image = self.adapter.read()
+            #print(type(image))
         except Exception as e:
-            print(e)
+            print(self.counter,e)
             image = np.ones((10, 10, 3))
         try:
             if self.flip:
@@ -38,6 +85,8 @@ class VideoCamera(object):
                 image = self.add_info(image)
         except Exception as e:
             print(e)
+        if image is None:
+            image = np.ones((10, 10, 3))
         self.last_frame = image.copy()
         return image
 
@@ -99,10 +148,7 @@ class VideoCamera(object):
         Returns:
             bool: True means that camera is available
         """
-        if self.video is None or not self.video.isOpened():
-            return False
-        else:
-            return True
+        return self.adapter.check()
 
 
 def gen(camera: VideoCamera):
@@ -117,3 +163,9 @@ def gen(camera: VideoCamera):
     while True:
         frame = camera.get_frame_as_bytes()
         yield (b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n\r\n")
+if __name__ == "__main__":
+    
+    cam = VideoCamera()
+    res,img = cam.video.read()
+    print(res,type(img))
+    

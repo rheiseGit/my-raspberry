@@ -1,3 +1,5 @@
+print('START')
+
 from dash import Dash, Output, Input, html, dcc
 import dash
 import dash_bootstrap_components as dbc
@@ -5,6 +7,7 @@ from flask import Flask, Response, redirect
 import pys.camera as camera
 import os
 
+print('START')
 # SOME CONFIGURATION
 APPLICATION_DIR = os.path.dirname(__file__)
 FOLDER_TO_SAVE_IMAGES = "saved"
@@ -21,7 +24,7 @@ def root_redirect():
 
 # DASH: main framework used
 # usage of multi-page feature (partially)
-
+print('START')
 app = Dash(
     __name__,
     use_pages=True,
@@ -111,9 +114,10 @@ app.layout = html.Div(
 )
 
 # Functionality of Camera (connection of camera.py to cam)
-cam = camera.VideoCamera()
+adapter = camera.AdapterPiCamera()
+cam = camera.VideoCamera(adapter=adapter)
 res = cam.check()
-print(res)
+print('Camera Ceck',res)
 
 
 @server.route("/video_feed")
@@ -162,4 +166,5 @@ def click_camera_save_button(n_clicks):
 
 
 if __name__ == "__main__":
-    app.run_server(host="0.0.0.0", port="8050", debug=True)
+    app.run_server(host="0.0.0.0", port="8050", debug=False)
+
