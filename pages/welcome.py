@@ -8,7 +8,6 @@ layout = html.Div(
         html.H2("Welcome"),
         html.P(
             "This project aims at providing access to several features implemented on a RPi! ",
-            style={"font-style": "italic"},
         ),
         html.Img(
             src=dash.get_asset_url("squirrel.png"), style={"padding-bottom": "10px"}

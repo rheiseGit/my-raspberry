@@ -1,11 +1,11 @@
 import dash
 from dash import html, dcc, callback, Input, Output
 
-dash.register_page(__name__, title="Logs", name="logs")
+dash.register_page(__name__, title="Test", name="test")
 
 layout = html.Div(
     [
-        html.H2("Logs"),
+        html.H2("Test"),
         html.P(
             "What should be shown here? So far, just an example for a callback.",
             style={"font-style": "italic"},

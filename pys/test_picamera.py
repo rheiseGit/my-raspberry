@@ -1,5 +1,3 @@
-
-
 import time
 import picamera2
 import numpy as np

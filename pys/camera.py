@@ -1,22 +1,23 @@
 import cv2
 import numpy as np
 import time
-import picamera2 
+import picamera2
 
 CAMERA_INDEX = -1
-print('Camera-Index',CAMERA_INDEX)
+print("Camera-Index", CAMERA_INDEX)
 
-class AdapterOpenCV():
+
+class AdapterOpenCV:
     def __init__(self):
         self.vc = cv2.VideoCapture(-1)
-        
-    def read(self)->np.array:
+
+    def read(self) -> np.array:
         success, image = self.vc.read()
         return image
-    
+
     def release(self):
         self.vc.release()
-        
+
     def check(self) -> bool:
         """check if camera if available
 
@@ -27,30 +28,37 @@ class AdapterOpenCV():
             return False
         else:
             return True
-        
-class AdapterPiCamera():
+
+
+class AdapterPiCamera:
     def __init__(self):
         self.pc = picamera2.Picamera2()
+        self.video_config = self.pc.create_video_configuration(
+            main={"size": (160, 120)}, lores={"size": (160, 120)}, display="lores"
+        )
+        self.pc.configure(self.video_config)
         self.pc.start()
-        
-    def read(self)->np.array:
+
+    def read(self) -> np.array:
         image = self.pc.capture_array("main")
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
         return image
-    
+
     def release(self):
         self.pc.stop()
         self.pc.close()
-        print('--')
-    
+        print("--")
+
     def check(self):
         return True
 
-class VideoCamera(object):
-    def __init__(self,adapter):
+
+class CameraController(object):
+    def __init__(self, adapter):
         self.adapter = adapter
         self.use_grayscale = False
-        self.flip = False
+        self.flip_v = False
+        self.flip_h = False
         self.info = False
         self.counter = 0
         self.font = cv2.FONT_HERSHEY_SIMPLEX
@@ -67,17 +75,19 @@ class VideoCamera(object):
             numpy.array: Image taken by camera
         """
         self.counter += 1
-        #print(self.check())
-        #time.sleep(1)
+        # print(self.check())
+        # time.sleep(1)
         try:
             image = self.adapter.read()
-            #print(type(image))
+            # print(type(image))
         except Exception as e:
-            print(self.counter,e)
+            print(self.counter, e)
             image = np.ones((10, 10, 3))
         try:
-            if self.flip:
+            if self.flip_v:
                 image = cv2.flip(image, 1)
+            if self.flip_h:
+                image = cv2.flip(image, 0)
             if self.use_grayscale:
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
                 image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
@@ -125,7 +135,7 @@ class VideoCamera(object):
         """
         return cv2.putText(
             frame,
-            f"Frame Number: {self.counter}",
+            f"{self.counter}",
             (10, 40),
             self.font,
             1,
@@ -151,7 +161,7 @@ class VideoCamera(object):
         return self.adapter.check()
 
 
-def gen(camera: VideoCamera):
+def gen(camera: CameraController):
     """returns generator generating the byte-code of the single images
 
     Args:
@@ -163,9 +173,9 @@ def gen(camera: VideoCamera):
     while True:
         frame = camera.get_frame_as_bytes()
         yield (b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n\r\n")
+
+
 if __name__ == "__main__":
-    
-    cam = VideoCamera()
-    res,img = cam.video.read()
-    print(res,type(img))
-    
+    cam = CameraController()
+    res, img = cam.video.read()
+    print(res, type(img))

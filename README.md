@@ -26,3 +26,10 @@ The project aims to create a web application for a Raspberry Pi, which provides 
 	> conda install -c conda-forge pandas
 
 	> conda env export > environment.yml
+
+To use picamera2 install with sudo apt (already installed?)
+
+	> python -m venv --system-site-packages my-env
+
+
+https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf
