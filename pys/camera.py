@@ -33,10 +33,10 @@ class AdapterOpenCV:
 class AdapterPiCamera:
     def __init__(self):
         self.pc = picamera2.Picamera2()
-        self.video_config = self.pc.create_video_configuration(
-            main={"size": (160, 120)}, lores={"size": (160, 120)}, display="lores"
-        )
-        self.pc.configure(self.video_config)
+        # self.video_config = self.pc.create_video_configuration(
+        #    main={"size": (160, 120)}, lores={"size": (160, 120)}, display="lores"
+        # )
+        # self.pc.configure(self.video_config)
         self.pc.start()
 
     def read(self) -> np.array:

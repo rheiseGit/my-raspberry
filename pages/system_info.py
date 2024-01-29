@@ -2,7 +2,7 @@ import dash
 from dash import html, __version__
 import platform
 
-import platform, socket, re, uuid, json, psutil
+import platform, socket, re, uuid, psutil
 
 
 def getSystemInfo():

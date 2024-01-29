@@ -10,8 +10,5 @@ layout = html.Div(
             "Just an empty page, which might serve as a template.",
             style={"font-style": "italic"},
         ),
-        html.P(
-            "Just an empty page. " * 300,
-        ),
     ]
 )
