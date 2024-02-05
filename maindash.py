@@ -15,6 +15,14 @@ def root_redirect():
     return redirect("/welcome")
 
 
+""" to be tested
+dash.register_page(
+    __name__,
+    path="/welcome",
+    redirect_from=["/"]
+)
+"""
+
 # DASH: main framework used
 # usage of multi-page feature (partially)
 print("START")
@@ -50,7 +58,7 @@ clientside_callback(
     """
     (switchOn) => {
        switchOn
-         ? document.documentElement.setAttribute('data-bs-theme', 'light')    
+         ? document.documentElement.setAttribute('data-bs-theme', 'light')
          : document.documentElement.setAttribute('data-bs-theme', 'dark')
        return window.dash_clientside.no_update
     }
@@ -87,8 +95,8 @@ navbar = dbc.NavbarSimple(
     children=[
         dbc.NavItem(
             dbc.NavLink(
-                "Camera Control",
-                href="/cameracontrol",
+                "Videostream",
+                href="/stream",
             )
         ),
         dbc.DropdownMenu(
