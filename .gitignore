@@ -1,6 +1,7 @@
 # my ignores
 __*
 *.jpg
+.vscode
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
