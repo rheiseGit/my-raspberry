@@ -74,10 +74,10 @@ class SimpleMotionDetect:
             self.__frame2 = cv2.addWeighted(self.__frame2, beta, bwframe, 1 - beta, 0.0)
 
             # Difference of frames
-            diff_frame = cv2.absdiff(self.__frame2, self.__frame1)
-            self.__diff_frame = cv2.addWeighted(
-                self.__diff_frame, alpha, diff_frame, 1 - alpha, 0.0
-            )
+        diff_frame = cv2.absdiff(self.__frame2, self.__frame1)
+        self.__diff_frame = cv2.addWeighted(
+            self.__diff_frame, alpha, diff_frame, 1 - alpha, 0.0
+        )
 
         # Threshold for differences
         diff_frame = cv2.absdiff(self.__diff_frame, diff_frame)
@@ -102,7 +102,9 @@ class SimpleMotionDetect:
         d1 = cv2.cvtColor(self.__frame1, cv2.COLOR_GRAY2BGR)
         d2 = cv2.cvtColor(self.__frame2, cv2.COLOR_GRAY2BGR)
         d3 = cv2.cvtColor(
-            (self.__diff_frame / np.max(self.__diff_frame) * 255).astype("uint8"),
+            (self.__diff_frame / max(100, np.max(self.__diff_frame)) * 255).astype(
+                "uint8"
+            ),
             cv2.COLOR_GRAY2BGR,
         )
 

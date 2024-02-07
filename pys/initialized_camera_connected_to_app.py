@@ -18,7 +18,7 @@ print(configdata)
 
 print("CAMERA INIT")
 if configdata["camera"] == "PICAMERA":
-    adapter = camera.AdapterPiCamera(3)
+    adapter = camera.AdapterPiCamera(0)
 elif configdata["camera"] == "OPENCV":
     adapter = camera.AdapterOpenCV()
 else:
