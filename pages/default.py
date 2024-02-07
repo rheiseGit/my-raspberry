@@ -1,3 +1,7 @@
+"""
+PAGE: template
+"""
+
 import dash
 from dash import html
 

@@ -1,3 +1,7 @@
+"""
+PAGE: Simplification of page cameracontrol which allows only to pick up the video
+"""
+
 import dash
 from dash import html, Output, Input, State, dcc, callback, get_app
 import dash_bootstrap_components as dbc
@@ -35,7 +39,7 @@ def create_layout(cam=cam):
     """Creates layout based on current status of for example the camera
     Function is called when page is loaded
     """
-    
+
     # Layout of controls
     controls_camera = [
         dbc.Row(
@@ -55,28 +59,26 @@ def create_layout(cam=cam):
     ]
 
     row_hr_image = dbc.Row(
-            [
-                
-                dbc.Col(
-                    [],
-                    id="stream-col-hr-image",
-                    className="col-sm-9 col-12",
-                ),
-                dbc.Col(
-                    [    
-                        dbc.Button(
-                            VALUE_BUTTON_SAVE_IMAGE,
-                            id="stream-camera-save-button",
-                            className="m-1 d-md-block",
-                        ),
-                    ],
-                    className="col-12 col-sm-3",
-                ),
-            ],
-            id = 'stream-row-hr-image',
-            style={'display':'none'}
-        )
-    
+        [
+            dbc.Col(
+                [],
+                id="stream-col-hr-image",
+                className="col-sm-9 col-12",
+            ),
+            dbc.Col(
+                [
+                    dbc.Button(
+                        VALUE_BUTTON_SAVE_IMAGE,
+                        id="stream-camera-save-button",
+                        className="m-1 d-md-block",
+                    ),
+                ],
+                className="col-12 col-sm-3",
+            ),
+        ],
+        id="stream-row-hr-image",
+        style={"display": "none"},
+    )
 
     # Main layout
     layout = html.Div(
@@ -113,6 +115,7 @@ def create_layout(cam=cam):
 
 layout = create_layout
 
+
 @app.callback(
     Output("stream-camera-save-button", "disabled", allow_duplicate=True),
     Output("stream-camera-save-button", "children", allow_duplicate=True),
@@ -122,28 +125,33 @@ layout = create_layout
 def click_camera_save_button(n_clicks):
     """Save-image-button"""
     filepath = os.path.join(PATH_TO_SAVE_IMAGES, "saved_image.jpg")
-    print(' - SAVEFILE:', filepath)
+    print(" - SAVEFILE:", filepath)
     cam.save_stored_image_to_file(filepath)
-    return True,VALUE_BUTTON_SAVED_IMAGE
+    return True, VALUE_BUTTON_SAVED_IMAGE
 
 
 @app.callback(
     Output("stream-col-hr-image", "children"),
     Output("stream-camera-save-button", "disabled", allow_duplicate=True),
     Output("stream-camera-save-button", "children", allow_duplicate=True),
-    Output("stream-row-hr-image","style"),
+    Output("stream-row-hr-image", "style"),
     Input("stream-camera-hr-button", "n_clicks"),
     prevent_initial_call=True,
 )
 def click_hr_button(n_clicks):
     """Take HR-Image"""
     if n_clicks % 2 == 0:
-        return [],True,VALUE_BUTTON_SAVE_IMAGE,{'display':'none'}
+        return [], True, VALUE_BUTTON_SAVE_IMAGE, {"display": "none"}
     else:
         dataURI = encode_frame_as_jpg(cam.get_and_store_last_transformed_frame())
-        return html.Img(
-            src=dataURI,
-            id="image-hr",
-            width="100%",
-            style={"padding-bottom": "4px"},
-        ),False,VALUE_BUTTON_SAVE_IMAGE,{'display':'flex'}
+        return (
+            html.Img(
+                src=dataURI,
+                id="image-hr",
+                width="100%",
+                style={"padding-bottom": "4px"},
+            ),
+            False,
+            VALUE_BUTTON_SAVE_IMAGE,
+            {"display": "flex"},
+        )

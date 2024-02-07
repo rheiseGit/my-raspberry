@@ -1,10 +1,14 @@
-# defines app, server
+"""
+This module describes the basic structure of the application.
+    - dash-multipage-features
+    - navbar
+"""
+
 import dash
 from dash import Dash, Output, State, Input, html, dcc, clientside_callback
 import dash_bootstrap_components as dbc
-
-
 from flask import Flask, redirect
+
 
 # FLASK: used to redirect and set up videostream
 server = Flask(__name__)
@@ -68,7 +72,7 @@ clientside_callback(
 )
 
 # NAVBAR
-# The Creation of navbar incluing the pages defined in folder pages
+# The Creation of navbar including the pages defined in folder pages
 # Pages with the prefix "feature" in there will appear in the section features
 # else in seaction onformation
 

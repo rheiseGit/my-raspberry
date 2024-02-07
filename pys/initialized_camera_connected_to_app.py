@@ -1,14 +1,29 @@
+"""
+This module instanciate an instance of class CameraControl in order 
+to allow different pages to access the same instance.
+It can be import where this instance is needed.
+The instance of CameraControl is connected to the Flask-Server of the dash-app.
+"""
+
 import pys.camera as camera
 from flask import Response
 from dash import get_app
+import json
 
-"""
-Camera is defined here in order to allow to access the same CameraController 
-in several pages of the dash app
-"""
+with open("config.json") as json_data_file:
+    configdata = json.load(json_data_file)
+
+print("CONFIG.JSON")
+print(configdata)
 
 print("CAMERA INIT")
-adapter = camera.AdapterPiCamera(3)
+if configdata["camera"] == "PICAMERA":
+    adapter = camera.AdapterPiCamera(3)
+elif configdata["camera"] == "OPENCV":
+    adapter = camera.AdapterOpenCV()
+else:
+    pass
+
 cam = camera.CameraController(adapter=adapter)
 res = cam.check()
 print(" - CAMERA CHECK", res, id(cam))

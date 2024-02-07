@@ -1,7 +1,10 @@
+"""
+PAGE: Provides some information about the platform.
+"""
+
 import dash
 from dash import html, __version__
 import platform
-
 import platform, socket, re, uuid, psutil
 
 

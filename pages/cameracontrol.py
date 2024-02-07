@@ -1,3 +1,7 @@
+"""
+PAGE: describing the controls of the camera in the app at page cameracontrol
+"""
+
 import dash
 from dash import html, Output, Input, State, dcc, callback, get_app
 import dash_bootstrap_components as dbc
@@ -43,7 +47,8 @@ VALUE_BUTTON_HR_IMAGE = [
 ]
 
 
-def create_layout():#cam=cam):
+# Layout is defined as a function the allow the layout to read information from camera
+def _create_layout():  # cam=cam):
     """Creates layout based on current status of for example the camera
     Function is called when page is loaded
     """
@@ -56,9 +61,10 @@ def create_layout():#cam=cam):
                         dbc.Container(
                             [
                                 dbc.Checklist(
-                                    options=cam.get_keys_of_transformations('basic'),
-                                    value=cam.get_active_transformations('basic'),
+                                    options=cam.get_keys_of_transformations("basic"),
+                                    value=cam.get_active_transformations("basic"),
                                     id="checklist-basic-transformations",
+                                    switch=True,
                                 ),
                             ]
                         ),
@@ -71,26 +77,43 @@ def create_layout():#cam=cam):
                             [
                                 dbc.Checklist(
                                     options=[transformation],
-                                    value=[transformation] if transformation in cam.get_active_transformations('registered') else [],
+                                    value=(
+                                        [transformation]
+                                        if transformation
+                                        in cam.get_active_transformations("registered")
+                                        else []
+                                    ),
                                     id=f"checklist-registered-{transformation}-transformations",
-                                    switch = True
+                                    switch=True,
                                 ),
                                 dbc.Container(
                                     [
-                                        dcc.Input(
-                                            placeholder=para.name,
-                                            value = para.value,
-                                            min = para.vmin,
-                                            max=para.vmax,
-                                            type='number',
-                                            id=f"input-parameter-{transformation}-{key}"
-                                            )
-                                        for key, para in cam.get_transformation('registered', transformation).parameter.items()
+                                        dbc.Row(
+                                            [
+                                                dbc.Col(f"{para.name}"),
+                                                dbc.Col(
+                                                    dcc.Input(
+                                                        placeholder=para.name,
+                                                        value=para.value,
+                                                        min=para.vmin,
+                                                        max=para.vmax,
+                                                        type="number",
+                                                        id=f"input-parameter-{transformation}-{key}",
+                                                    )
+                                                ),
+                                            ]
+                                        )
+                                        for key, para in cam.get_transformation(
+                                            "registered", transformation
+                                        ).parameter.items()
                                     ]
                                 ),
                             ]
                         )
-                    for transformation in cam.get_keys_of_transformations('registered')],
+                        for transformation in cam.get_keys_of_transformations(
+                            "registered"
+                        )
+                    ],
                     title="Registered Transformations",
                 ),
                 dbc.AccordionItem(
@@ -98,9 +121,10 @@ def create_layout():#cam=cam):
                         dbc.Container(
                             [
                                 dbc.Checklist(
-                                    options=cam.get_keys_of_transformations('post'),
-                                    value=cam.get_active_transformations('post'),
+                                    options=cam.get_keys_of_transformations("post"),
+                                    value=cam.get_active_transformations("post"),
                                     id="checklist-post-transformations",
+                                    switch=True,
                                 ),
                             ]
                         ),
@@ -161,28 +185,26 @@ def create_layout():#cam=cam):
     ]
 
     row_hr_image = dbc.Row(
-            [
-                
-                dbc.Col(
-                    [],
-                    id="col-hr-image",
-                    className="col-sm-9 col-12",
-                ),
-                dbc.Col(
-                    [    
-                        dbc.Button(
-                            VALUE_BUTTON_SAVE_IMAGE,
-                            id="camera-save-button",
-                            className="m-1 d-md-block",
-                        ),
-                    ],
-                    className="col-12 col-sm-3",
-                ),
-            ],
-            id = 'row-hr-image',
-            style={'display':'none'}
-        )
-    
+        [
+            dbc.Col(
+                [],
+                id="col-hr-image",
+                className="col-sm-9 col-12",
+            ),
+            dbc.Col(
+                [
+                    dbc.Button(
+                        VALUE_BUTTON_SAVE_IMAGE,
+                        id="camera-save-button",
+                        className="m-1 d-md-block",
+                    ),
+                ],
+                className="col-12 col-sm-3",
+            ),
+        ],
+        id="row-hr-image",
+        style={"display": "none"},
+    )
 
     # Main layout
     layout = html.Div(
@@ -218,7 +240,7 @@ def create_layout():#cam=cam):
     return layout
 
 
-layout = create_layout
+layout = _create_layout
 
 
 # CALLBACKS
@@ -230,14 +252,13 @@ layout = create_layout
 )
 def click_camera_start_stop_button(n_clicks):
     """Start-stop-button"""
-    print(' - START-STOP-BUTTON:', cam.running)
+    print(" - START-STOP-BUTTON:", cam.running)
     if cam.running():
         cam.stop()
         return VALUE_BUTTON_START, False
     else:
         cam.run()
         return VALUE_BUTTON_STOP, True
-
 
 
 @app.callback(
@@ -249,31 +270,36 @@ def click_camera_start_stop_button(n_clicks):
 def click_camera_save_button(n_clicks):
     """Save-image-button"""
     filepath = os.path.join(PATH_TO_SAVE_IMAGES, "saved_image.jpg")
-    print(' - SAVEFILE:', filepath)
+    print(" - SAVEFILE:", filepath)
     cam.save_stored_image_to_file(filepath)
-    return True,VALUE_BUTTON_SAVED_IMAGE
+    return True, VALUE_BUTTON_SAVED_IMAGE
 
 
 @app.callback(
     Output("col-hr-image", "children"),
     Output("camera-save-button", "disabled", allow_duplicate=True),
     Output("camera-save-button", "children", allow_duplicate=True),
-    Output("row-hr-image","style"),
+    Output("row-hr-image", "style"),
     Input("camera-hr-button", "n_clicks"),
     prevent_initial_call=True,
 )
 def click_hr_button(n_clicks):
     """Take HR-Image"""
     if n_clicks % 2 == 0:
-        return [],True,VALUE_BUTTON_SAVE_IMAGE,{'display':'none'}
+        return [], True, VALUE_BUTTON_SAVE_IMAGE, {"display": "none"}
     else:
         dataURI = encode_frame_as_jpg(cam.get_and_store_last_transformed_frame())
-        return html.Img(
-            src=dataURI,
-            id="image-hr",
-            width="100%",
-            style={"padding-bottom": "4px"},
-        ),False,VALUE_BUTTON_SAVE_IMAGE,{'display':'flex'}
+        return (
+            html.Img(
+                src=dataURI,
+                id="image-hr",
+                width="100%",
+                style={"padding-bottom": "4px"},
+            ),
+            False,
+            VALUE_BUTTON_SAVE_IMAGE,
+            {"display": "flex"},
+        )
 
 
 @app.callback(
@@ -287,6 +313,7 @@ def toggle_offcanvas(n1, is_open):
         return not is_open
     return is_open
 
+
 @app.callback(
     Output("placeholder", "children", allow_duplicate=True),
     Input("checklist-basic-transformations", "value"),
@@ -294,8 +321,9 @@ def toggle_offcanvas(n1, is_open):
 )
 def set_basic_transformations(values):
     """Activation of Basic Tranformations"""
-    cam.set_active_transformations('basic', values)
+    cam.set_active_transformations("basic", values)
     return ""
+
 
 @app.callback(
     Output("placeholder", "children", allow_duplicate=True),
@@ -304,41 +332,65 @@ def set_basic_transformations(values):
 )
 def set_post_transformations(values):
     """Activation of Post Tranformations"""
-    cam.set_active_transformations('post', values)
+    cam.set_active_transformations("post", values)
     return ""
+
 
 ## REGISTERED TRANSFORMATION
 
+
 def get_callback_for_checklist_of_registered_transformations(transformation):
     """Function factory returns callback-function for toggle switch to activate transformation"""
+
     def func(values):
         """Activation of Regristered Transformations"""
-        a = list(set(cam.get_active_transformations('registered'))-set(transformation))
-        if len(values) > 0 and values[0] == transformation:
-            a.append(transformation)
-        cam.set_active_transformations('registered', values)
+        currently_active = set(cam.get_active_transformations("registered"))
+        print(values)
+        print(currently_active)
+        if values:
+            currently_active.add(transformation)
+        elif transformation in currently_active:
+            currently_active.remove(transformation)
+        else:
+            pass
+        cam.set_active_transformations("registered", list(currently_active))
+        print(cam.get_active_transformations("registered"))
         return ""
+
     return func
 
-def get_callback_for_parameter_of_registered_transformation(transformation,parameter):
+
+def get_callback_for_parameter_of_registered_transformation(transformation, parameter):
     """Function factory returns calback for inout filed for parameter of transformation"""
+
     def func(value):
         """Allows to set values of parameter of transformations"""
-        print(f"- SET PARA {transformation} {parameter} ",value)
-        cam.get_transformation('registered', transformation).parameter[parameter].value = value
+        print(f"- SET PARA {transformation} {parameter} ", value)
+        cam.get_transformation("registered", transformation).parameter[
+            parameter
+        ].value = value
+
     return func
 
+
 # For all registerd transformations callback for their activation and parameter are created
-for transformation in cam.get_keys_of_transformations('registered'):
-    print(' - register callback:',transformation)
+for transformation in cam.get_keys_of_transformations("registered"):
+    print(" - register callback:", transformation)
     app.callback(
         Output("placeholder", "children", allow_duplicate=True),
         Input(f"checklist-registered-{transformation}-transformations", "value"),
-        prevent_initial_call=True
-        )(get_callback_for_checklist_of_registered_transformations(transformation))
-    for parameter in cam.get_transformation('registered', transformation).parameter.keys():
-        print(' - register callback:',transformation,parameter)
+        prevent_initial_call=True,
+    )(get_callback_for_checklist_of_registered_transformations(transformation))
+    for parameter in cam.get_transformation(
+        "registered", transformation
+    ).parameter.keys():
+        print(" - register callback:", transformation, parameter)
         app.callback(
             Output("placeholder", "children", allow_duplicate=True),
             Input(f"input-parameter-{transformation}-{parameter}", "value"),
-            prevent_initial_call=True)(get_callback_for_parameter_of_registered_transformation(transformation,parameter))
+            prevent_initial_call=True,
+        )(
+            get_callback_for_parameter_of_registered_transformation(
+                transformation, parameter
+            )
+        )
