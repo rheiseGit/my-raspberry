@@ -34,7 +34,7 @@ class Smoother:
         self.__last_frame = None
 
 
-class SimpleMotionDetect:
+class SimpleMotionDetection:
     def __init__(
         self, alpha=0.9, beta=0.4, threshold=20, blur=20, gbks=3, action_threshold=6
     ):

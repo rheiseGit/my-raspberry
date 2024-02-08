@@ -1,5 +1,5 @@
 """
-This module instanciate an instance of class CameraControl in order 
+This module instanciate an instance of class CameraControl in order
 to allow different pages to access the same instance.
 It can be import where this instance is needed.
 The instance of CameraControl is connected to the Flask-Server of the dash-app.
@@ -24,7 +24,15 @@ elif configdata["camera"] == "OPENCV":
 else:
     pass
 
-cam = camera.CameraController(adapter=adapter)
+cam = camera.CameraController(
+    adapter=adapter,
+    active_preprocessing_transformations=configdata[
+        "active_preprocessing_transformations"
+    ],
+    active_postprocessing_transformations=configdata[
+        "active_postprocessing_transformations"
+    ],
+)
 res = cam.check()
 print(" - CAMERA CHECK", res, id(cam))
 

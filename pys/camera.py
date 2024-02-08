@@ -171,7 +171,12 @@ def bgr_to_grayscale_bgr(img) -> np.array:
 
 
 class CameraController(object):
-    def __init__(self, adapter):
+    def __init__(
+        self,
+        adapter,
+        active_preprocessing_transformations=[],
+        active_postprocessing_transformations=[],
+    ):
         #:Adapter: allows to access to camera via specified interface
         self.__adapter = adapter
         #: int: counts images taken
@@ -193,20 +198,27 @@ class CameraController(object):
                 {
                     "vflip": lambda img: cv2.flip(img, 1),
                     "hflip": lambda img: cv2.flip(img, 0),
-                    "gray": lambda img: bgr_to_grayscale_bgr(img),
+                    "grayscale": lambda img: bgr_to_grayscale_bgr(img),
                 }
             ),
             "registered": OrderedDict(
                 {
                     "smooth": transformer.Smoother(0.6),
                     "test": transformer.Test(1),
-                    "delta": transformer.SimpleMotionDetect(),
+                    "delta": transformer.SimpleMotionDetection(),
                 }
             ),
         }
+
+        preprocessing = set(active_preprocessing_transformations).intersection(
+            set(self.__transformations["basic"].keys())
+        )
+        postprocessing = set(active_postprocessing_transformations).intersection(
+            set(self.__transformations["post"].keys())
+        )
         #:dict: indicate which transformation are active
         self.__active_transformations = dict(
-            basic=["vflip", "hflip"], registered=[], post=[]
+            basic=preprocessing, registered=[], post=postprocessing
         )
         #:cv2.FONT: font to be used for text incerted to an img
         self.__font = cv2.FONT_HERSHEY_SIMPLEX
