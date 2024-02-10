@@ -191,21 +191,22 @@ class CameraController(object):
         self.__transformations = {
             "post": OrderedDict(
                 {
-                    "info": self.__add_info_to_frame,
+                    "Camera Info": self.__add_info_to_frame,
                 }
             ),
             "basic": OrderedDict(
                 {
-                    "vflip": lambda img: cv2.flip(img, 1),
-                    "hflip": lambda img: cv2.flip(img, 0),
-                    "grayscale": lambda img: bgr_to_grayscale_bgr(img),
+                    "Vflip": lambda img: cv2.flip(img, 1),
+                    "Hflip": lambda img: cv2.flip(img, 0),
+                    "Grayscale": lambda img: bgr_to_grayscale_bgr(img),
                 }
             ),
             "registered": OrderedDict(
                 {
                     "smooth": transformer.Smoother(0.6),
+                    "gaussblur": transformer.GaussianBlur(3),
                     "test": transformer.Test(1),
-                    "delta": transformer.SimpleMotionDetection(),
+                    "SMD": transformer.SimpleMotionDetection(),
                 }
             ),
         }
@@ -231,6 +232,10 @@ class CameraController(object):
         #:np.array:last frame taken by tha woth all tranformations applied
         self._last_frame_brp = None
 
+    def get_data_from_simple_motion_detection(self):
+        """to be deleted"""
+        return self.__transformations["registered"]["SMD"].get_data()
+
     def get_active_transformations(self, key) -> list:
         """Returns list of active transformations
 
@@ -254,7 +259,9 @@ class CameraController(object):
     def get_keys_of_transformations(self, key):
         return list(self.__transformations[key].keys())
 
-    def get_transformation(self, key_group, key):
+    def get_transformation(self, key_group, key=None):
+        if not key:
+            return self.__transformations[key_group]
         return self.__transformations[key_group][key]
 
     def release(self):

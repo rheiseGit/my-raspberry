@@ -8,6 +8,7 @@ import dash_bootstrap_components as dbc
 from pys.initialized_camera_connected_to_app import cam
 from pys.camera import encode_frame_as_jpg
 import os
+import plotly.express as px
 
 print("REGISTER", __file__)
 dash.register_page(__name__, title="Camera-Control", name="feature-camera-control")
@@ -45,6 +46,54 @@ VALUE_BUTTON_HR_IMAGE = [
     html.I(className="bi bi-image-fill m-1"),
     "Image",
 ]
+
+
+def get_figure():
+    return {
+        "data": [
+            {
+                "x": list(range(1000)),
+                "y": list(cam.get_data_from_simple_motion_detection().get("data")),
+                "type": "line",
+            }
+        ],
+        "layout": {
+            "title": "Detektor",
+            # "range_y": [-1, 60],
+            "margin": {"l": "0", "r": "0"},
+        },
+    }
+
+
+def get_figure():
+    fig = px.line(
+        x=list(range(1000)),
+        y=list(cam.get_data_from_simple_motion_detection().get("data")),
+    )
+    fig.update_layout(
+        margin=dict(l=0, r=0, b=0, t=50),
+        title="Detektor",
+        showlegend=False,
+        plot_bgcolor="white",
+        yaxis_range=[0, 30],
+    )
+    return fig
+
+
+def get_parameter_setter_component(para: "Parameter", id: str):
+    if para.vmin == 0 and para.vmax == 1:
+        step = 0.1
+    else:
+        step = 1
+    return dcc.Input(
+        placeholder=para.name,
+        value=para.value,
+        min=para.vmin,
+        max=para.vmax,
+        step=step,
+        type="number",
+        id=id,
+    )
 
 
 # Layout is defined as a function the allow the layout to read information from camera
@@ -92,12 +141,8 @@ def _create_layout():  # cam=cam):
                                             [
                                                 dbc.Col(f"{para.name}"),
                                                 dbc.Col(
-                                                    dcc.Input(
-                                                        placeholder=para.name,
-                                                        value=para.value,
-                                                        min=para.vmin,
-                                                        max=para.vmax,
-                                                        type="number",
+                                                    get_parameter_setter_component(
+                                                        para,
                                                         id=f"input-parameter-{transformation}-{key}",
                                                     )
                                                 ),
@@ -110,9 +155,7 @@ def _create_layout():  # cam=cam):
                                 ),
                             ]
                         )
-                        for transformation in cam.get_keys_of_transformations(
-                            "registered"
-                        )
+                        for transformation in cam.get_transformation("registered")
                     ],
                     title="Registered Transformations",
                 ),
@@ -206,6 +249,20 @@ def _create_layout():  # cam=cam):
         style={"display": "none"},
     )
 
+    plots = dbc.Row(
+        dbc.Col(
+            [
+                dcc.Graph(
+                    figure=get_figure(),
+                    id="plot-smd",
+                    style={"display": "none", "margin": "0", "padding": "0"},
+                ),
+                dcc.Interval(id="interval-componente", interval=100),
+            ]
+        ),
+        id="row-plots",
+    )
+
     # Main layout
     layout = html.Div(
         [
@@ -233,6 +290,7 @@ def _create_layout():  # cam=cam):
                     ),
                 ],
             ),
+            plots,
             row_hr_image,
             offcanvas_transformations,
         ]
@@ -336,11 +394,21 @@ def set_post_transformations(values):
     return ""
 
 
+## LIVE-UPDATES
+
+
+@app.callback(Output("plot-smd", "figure"), Input("interval-componente", "n_intervals"))
+def update_plots(n_intervals):
+    print("N", n_intervals)
+    return get_figure()
+
+
 ## REGISTERED TRANSFORMATION
 
 
 def get_callback_for_checklist_of_registered_transformations(transformation):
-    """Function factory returns callback-function for toggle switch to activate transformation"""
+    """Function factory returns callback-function for toggle switch to activate a transformation"""
+    print("-register-")
 
     def func(values):
         """Activation of Regristered Transformations"""
@@ -349,19 +417,23 @@ def get_callback_for_checklist_of_registered_transformations(transformation):
         print(currently_active)
         if values:
             currently_active.add(transformation)
+            style = {"display": "flex"}
         elif transformation in currently_active:
             currently_active.remove(transformation)
+            style = {"display": "none"}
         else:
-            pass
+            style = {"display": "none"}
         cam.set_active_transformations("registered", list(currently_active))
+        current_transformation = cam.get_transformation("registered", transformation)
         print(cam.get_active_transformations("registered"))
-        return ""
+        print(current_transformation)
+        return "", style
 
     return func
 
 
 def get_callback_for_parameter_of_registered_transformation(transformation, parameter):
-    """Function factory returns calback for inout filed for parameter of transformation"""
+    """Function factory returns callback for input field for a parameter of a transformation"""
 
     def func(value):
         """Allows to set values of parameter of transformations"""
@@ -378,6 +450,7 @@ for transformation in cam.get_keys_of_transformations("registered"):
     print(" - register callback:", transformation)
     app.callback(
         Output("placeholder", "children", allow_duplicate=True),
+        Output("plot-smd", "style", allow_duplicate=True),
         Input(f"checklist-registered-{transformation}-transformations", "value"),
         prevent_initial_call=True,
     )(get_callback_for_checklist_of_registered_transformations(transformation))

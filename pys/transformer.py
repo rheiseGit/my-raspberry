@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+from collections import deque
 
 
 class Parameter:
@@ -18,6 +19,7 @@ class Smoother:
         self.parameter = dict(
             alpha=Parameter(name="Alpha", value=alpha, vmin=0, vmax=1)
         )
+        self.name = "Temporal smoothing"
 
     def __call__(self, frame):
         alpha = self.parameter["alpha"].value
@@ -34,14 +36,31 @@ class Smoother:
         self.__last_frame = None
 
 
+class GaussianBlur:
+    """Implements exponential smoothing in time-domain"""
+
+    def __init__(self, kernelsize, std=0):
+        self.parameter = dict(
+            kernelsize=Parameter(name="Kernelsize", value=kernelsize, vmin=0, vmax=50),
+            std=Parameter(name="Std", value=std, vmin=0, vmax=50),
+        )
+
+    def __call__(self, frame):
+        kernelsize = self.parameter["kernelsize"].value
+        std = self.parameter["std"].value
+        return cv2.GaussianBlur(frame, (kernelsize, kernelsize), std)
+
+    def reset(self):
+        pass
+
+
 class SimpleMotionDetection:
     def __init__(
-        self, alpha=0.9, beta=0.4, threshold=20, blur=20, gbks=3, action_threshold=6
+        self, alpha=0.9, beta=0.4, threshold=20, blur=20, action_threshold=6, output=6
     ):
         self.__frame1 = None
         self.__frame2 = None
         self.parameter = dict(
-            gbks=Parameter(name="GBKS", value=gbks, vmin=0, vmax=50),
             alpha=Parameter(name="Alpha", value=alpha, vmin=0, vmax=1),
             beta=Parameter(name="Beta", value=beta, vmin=0, vmax=1),
             threshold=Parameter(name="Threshold", value=threshold, vmin=0, vmax=255),
@@ -49,18 +68,22 @@ class SimpleMotionDetection:
             action_threshold=Parameter(
                 name="AT", value=action_threshold, vmin=1, vmax=100
             ),
+            output=Parameter(name="Output", value=output, vmin=0, vmax=9),
         )
         self.__last_image_detected = None
+        self.__data = deque([0] * 1000, 1000)
 
-    def __call__(self, frame):
+    def get_data(self) -> deque:
+        return {"data": self.__data}
+
+    def __call__(self, frame) -> np.array:
         bwframe = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-        gbks = self.parameter["gbks"].value
-        bwframe = cv2.GaussianBlur(bwframe, (gbks, gbks), 0)
         alpha = self.parameter["alpha"].value
         beta = self.parameter["beta"].value
         threshold = self.parameter["threshold"].value
         blur = self.parameter["maskblur"].value
         action_threshold = self.parameter["action_threshold"].value
+        output = self.parameter["output"].value
         if self.__last_image_detected is None:
             self.__last_image_detected = np.ones(frame.shape) * 100
         if self.__frame1 is None or self.__frame2 is None:
@@ -82,6 +105,7 @@ class SimpleMotionDetection:
         # Threshold for differences
         diff_frame = cv2.absdiff(self.__diff_frame, diff_frame)
         value = np.mean(diff_frame)
+        self.__data.append(value)
         # print(value)
         _, mask = cv2.threshold(diff_frame, threshold, 255, cv2.THRESH_BINARY)
 
@@ -111,7 +135,7 @@ class SimpleMotionDetection:
         d4 = cv2.cvtColor(diff_frame, cv2.COLOR_GRAY2BGR)
         d5 = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
         d6 = cv2.cvtColor(mask2, cv2.COLOR_GRAY2BGR)
-        d7 = cv2.addWeighted(frame_masked, 1, frame_masked2, 0.5, 0.0)
+        d7 = cv2.addWeighted(frame_masked, 1, frame_masked2, 0.8, 0.0)
 
         # d8 = frame
         if value > action_threshold:
@@ -126,9 +150,10 @@ class SimpleMotionDetection:
         img1 = np.hstack((d1, d2, d3))
         img2 = np.hstack((d4, d5, d6))
         img3 = np.hstack((d7, d8, d9))
-        img = np.vstack((img1, img2, img3))
+        img_all = np.vstack((img1, img2, img3))
 
-        return img
+        outputs = (d1, d2, d3, d4, d5, d6, d7, d8, d9, img_all)
+        return outputs[output]
 
     def reset(self):
         self.__frame1 = None
@@ -144,6 +169,7 @@ class Test:
 
     def __call__(self, frame):
         beta = self.parameter["beta"].value
+        print(" TRANSFORMER TEST", beta)
         if self.__last_frame is None:
             self.__last_frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
             return frame
